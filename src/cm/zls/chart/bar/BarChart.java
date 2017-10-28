@@ -1,63 +1,79 @@
 package cm.zls.chart.bar;
 
 import java.awt.Font;
-import java.text.NumberFormat;
 
 import javax.servlet.http.HttpSession;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.plot.PiePlot;
-import org.jfree.chart.plot.PiePlot3D;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.DateTickUnit;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.StandardXYItemLabelGenerator;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.servlet.ServletUtilities;
 import org.jfree.chart.title.TextTitle;
-import org.jfree.data.general.DefaultPieDataset;
-import org.jfree.util.Rotation;
+import org.jfree.data.time.Month;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.ui.TextAnchor;
 
 public class BarChart {
 
-	public static String getPieChart(HttpSession session) throws Exception {
-		DefaultPieDataset dataset = new DefaultPieDataset();
-		dataset.setValue("黑心矿难", 1000);
-		dataset.setValue("醉酒驾驶", 800);
-		dataset.setValue("城管强拆", 400);
-		dataset.setValue("医疗事故", 100);
-		dataset.setValue("其他", 29);
-		/*非3D显示
-		JFreeChart chart=ChartFactory.createPieChart("非正常死亡人数分布图", dataset, true, true, true);*/
+public static String genLineChart(HttpSession session)throws Exception{
 		
+		// 访问量统计
+		TimeSeries timeSeries=new TimeSeries("某网站访问量统计", Month.class);
+		// 添加数据
+		timeSeries.add(new Month(1,2013), 100);
+		timeSeries.add(new Month(2,2013), 200);
+		timeSeries.add(new Month(3,2013), 300);
+		timeSeries.add(new Month(4,2013), 400);
+		timeSeries.add(new Month(5,2013), 560);
+		timeSeries.add(new Month(6,2013), 600);
+		timeSeries.add(new Month(7,2013), 750);
+		timeSeries.add(new Month(8,2013), 890);
+		timeSeries.add(new Month(9,2013), 120);
+		timeSeries.add(new Month(10,2013), 400);
+		timeSeries.add(new Month(11,2013), 1200);
+		timeSeries.add(new Month(12,2013), 1600);
 		
-		//3D显示
-		JFreeChart chart=ChartFactory.createPieChart3D("非正常死亡人数分布图", dataset, true, true, true);
+		// 定义时间序列的集合
+		TimeSeriesCollection lineDataset=new TimeSeriesCollection();
+		lineDataset.addSeries(timeSeries);
 		
-		// 副标题
-		chart.addSubtitle(new TextTitle("2013年度"));
+		JFreeChart chart=ChartFactory.createTimeSeriesChart("访问量统计时间折线图", "月份", "访问量", lineDataset, true, true, true);
 		
-		PiePlot pieplot=(PiePlot)chart.getPlot();
-		pieplot.setLabelFont(new Font("宋体",0,11));
-		// 设置饼图是圆的（true），还是椭圆的（false）；默认为true  
-		pieplot.setCircular(true);
-		// 没有数据的时候显示的内容
-		pieplot.setNoDataMessage("无数据显示");
-		//图表显示数字
-		StandardPieSectionLabelGenerator standarPieIG = new StandardPieSectionLabelGenerator("{0}:({1}.{2})", NumberFormat.getNumberInstance(), NumberFormat.getPercentInstance());  
-		pieplot.setLabelGenerator(standarPieIG); 
-		//突出显示
-		pieplot.setExplodePercent("城管强拆",0.23); 
+		//设置主标题
+		chart.setTitle(new TextTitle("某网站访问量统计", new Font("隶书", Font.ITALIC, 15))); 
+		//设置子标题
+		TextTitle subtitle = new TextTitle("2013年度", new Font("黑体", Font.BOLD, 12));
+		chart.addSubtitle(subtitle); 
+		chart.setAntiAlias(true); 
 		
+		//设置时间轴的范围。
+		XYPlot plot = (XYPlot) chart.getPlot(); 
+		DateAxis dateaxis = (DateAxis)plot.getDomainAxis();
+		dateaxis.setDateFormatOverride(new java.text.SimpleDateFormat("M月"));
+		dateaxis.setTickUnit(new DateTickUnit(DateTickUnit.MONTH,1)); 
 		
-		//3D自定义报表
-		PiePlot3D pieplot3d = (PiePlot3D)chart.getPlot(); 
-		//设置开始角度  
-		pieplot3d.setStartAngle(120D);  
-		//设置方向为”顺时针方向“  
-		pieplot3d.setDirection(Rotation.CLOCKWISE);  
-		//设置透明度，0.5F为半透明，1为不透明，0为全透明  
-		pieplot3d.setForegroundAlpha(0.7F); 
-		String fileName=ServletUtilities.saveChartAsPNG(chart, 700, 500, null, session);
+		//设置曲线是否显示数据点
+		XYLineAndShapeRenderer xylinerenderer = (XYLineAndShapeRenderer)plot.getRenderer();
+		xylinerenderer.setBaseShapesVisible(true); 
+		
+		//设置曲线显示各数据点的值
+		XYItemRenderer xyitem = plot.getRenderer(); 
+		xyitem.setBaseItemLabelsVisible(true);
+		xyitem.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BASELINE_CENTER)); 
+		xyitem.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
+		xyitem.setBaseItemLabelFont(new Font("Dialog", 1, 12)); 
+		plot.setRenderer(xyitem);
+		
+		String fileName=ServletUtilities.saveChartAsPNG(chart, 700, 500, session);
 		
 		return fileName;
-		
 	}
 }
