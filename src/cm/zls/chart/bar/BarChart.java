@@ -1,52 +1,63 @@
 package cm.zls.chart.bar;
 
-import java.awt.Color;
+import java.awt.Font;
+import java.text.NumberFormat;
 
 import javax.servlet.http.HttpSession;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.ItemLabelAnchor;
-import org.jfree.chart.labels.ItemLabelPosition;
-import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer3D;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.chart.servlet.ServletUtilities;
-import org.jfree.data.category.CategoryDataset;
-import org.jfree.data.general.DatasetUtilities;
-import org.jfree.ui.TextAnchor;
+import org.jfree.chart.title.TextTitle;
+import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.util.Rotation;
 
 public class BarChart {
 
-	public static String genBarChart(HttpSession session)throws Exception{
-		//按地区分类显示
-		double [][]data = new double[][]{{1320,1100,451,1247},{720,456,1247,214},{830,875,456,1200},{400,874,1023,954}};
-		String []rowKeys={"苹果","香蕉","橘子","梨子"};
-		String []columnKeys={"深圳","北京","上海","南京"};
-		CategoryDataset dataset = DatasetUtilities.createCategoryDataset(rowKeys, columnKeys, data);
-		JFreeChart chart = ChartFactory.createBarChart3D("水果销售统计图", "水果", "销售", dataset, PlotOrientation.VERTICAL, true, true, true);
-		CategoryPlot plot=chart.getCategoryPlot();
-		// 设置网格背景颜色
-		plot.setBackgroundPaint(Color.white);
-		// 设置网格竖线颜色
-		plot.setDomainGridlinePaint(Color.pink);
-		// 设置网格横线颜色
-		plot.setRangeGridlinePaint(Color.pink);
+	public static String getPieChart(HttpSession session) throws Exception {
+		DefaultPieDataset dataset = new DefaultPieDataset();
+		dataset.setValue("黑心矿难", 1000);
+		dataset.setValue("醉酒驾驶", 800);
+		dataset.setValue("城管强拆", 400);
+		dataset.setValue("医疗事故", 100);
+		dataset.setValue("其他", 29);
+		/*非3D显示
+		JFreeChart chart=ChartFactory.createPieChart("非正常死亡人数分布图", dataset, true, true, true);*/
 		
-		// 显示每个柱的数值，并修改该数值的字体属性
-		BarRenderer3D renderer=new BarRenderer3D();
-		renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
-		renderer.setBaseItemLabelsVisible(true);
 		
-		renderer.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BASELINE_LEFT));
-		renderer.setItemLabelAnchorOffset(10D);  
+		//3D显示
+		JFreeChart chart=ChartFactory.createPieChart3D("非正常死亡人数分布图", dataset, true, true, true);
 		
-		// 设置平行柱的之间距离
-		renderer.setItemMargin(0.4);
+		// 副标题
+		chart.addSubtitle(new TextTitle("2013年度"));
 		
-		plot.setRenderer(renderer);
-		String fileName = ServletUtilities.saveChartAsJPEG(chart, 700, 500, null,session);
+		PiePlot pieplot=(PiePlot)chart.getPlot();
+		pieplot.setLabelFont(new Font("宋体",0,11));
+		// 设置饼图是圆的（true），还是椭圆的（false）；默认为true  
+		pieplot.setCircular(true);
+		// 没有数据的时候显示的内容
+		pieplot.setNoDataMessage("无数据显示");
+		//图表显示数字
+		StandardPieSectionLabelGenerator standarPieIG = new StandardPieSectionLabelGenerator("{0}:({1}.{2})", NumberFormat.getNumberInstance(), NumberFormat.getPercentInstance());  
+		pieplot.setLabelGenerator(standarPieIG); 
+		//突出显示
+		pieplot.setExplodePercent("城管强拆",0.23); 
+		
+		
+		//3D自定义报表
+		PiePlot3D pieplot3d = (PiePlot3D)chart.getPlot(); 
+		//设置开始角度  
+		pieplot3d.setStartAngle(120D);  
+		//设置方向为”顺时针方向“  
+		pieplot3d.setDirection(Rotation.CLOCKWISE);  
+		//设置透明度，0.5F为半透明，1为不透明，0为全透明  
+		pieplot3d.setForegroundAlpha(0.7F); 
+		String fileName=ServletUtilities.saveChartAsPNG(chart, 700, 500, null, session);
+		
 		return fileName;
+		
 	}
 }

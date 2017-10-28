@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title></title>
 <%
-	String fileName = BarChart.genBarChart(session);
+	String fileName = BarChart.getPieChart(session);
 %>
 </head>
 <body>
